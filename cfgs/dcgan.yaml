@@ -8,7 +8,7 @@ discriminator:
   num_features: 64
 
 train:
-  dataset_path: 'celeb/img_align_celeba' # relative path from datasets directory to root of dataset
+  dataset_path: './celeb' # relative path from datasets directory to root of dataset
   batch_size: 128
   learning_rate: 0.0001
   beta1: 0.5

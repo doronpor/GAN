@@ -135,7 +135,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='training configuration path')
     parser.add_argument('--config', action='store', default='./cfgs/dcgan.yaml', help='configuration path')
     parser.add_argument('--debug', action='store_true', help='generate images from generator')
-    parser.add_argument('--gif_path', action='store', default='./generator.gif', help='gif path')
+    parser.add_argument('--gif_path', action='store', default='./generator_sample.gif', help='gif path')
     parser.add_argument('--model_path', action='store', default='./models/dcgan.pth', help='module save path')
 
     args = parser.parse_args()

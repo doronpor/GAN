@@ -15,22 +15,17 @@ class Discriminator(Module):
         num_features = cfg['discriminator']['num_features']
 
         self.net = nn.Sequential(
-            # input is (nc) x 64 x 64
             nn.Conv2d(cfg['num_image_channels'], num_features, 4, 2, 1, bias=False),
             nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf) x 32 x 32
             nn.Conv2d(num_features, num_features * 2, 4, 2, 1, bias=False),
             nn.BatchNorm2d(num_features * 2),
             nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf*2) x 16 x 16
             nn.Conv2d(num_features * 2, num_features * 4, 4, 2, 1, bias=False),
             nn.BatchNorm2d(num_features * 4),
             nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf*4) x 8 x 8
             nn.Conv2d(num_features * 4, num_features * 8, 4, 2, 1, bias=False),
             nn.BatchNorm2d(num_features * 8),
             nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf*8) x 4 x 4
             nn.Conv2d(num_features * 8, 1, 4, 1, 0, bias=False),
             nn.Sigmoid()
         )
