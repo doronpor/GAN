@@ -10,7 +10,7 @@ discriminator:
 train:
   dataset_path: './celeb' # relative path from datasets directory to root of dataset
   batch_size: 128
-  learning_rate: 0.0001
+  learning_rate: 0.0002
   beta1: 0.5
   epochs: 5
   workers: 2

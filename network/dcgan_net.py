@@ -31,7 +31,7 @@ class Discriminator(Module):
         )
 
         # init model weights
-        self.apply(basic_weight_init)
+        self.apply(basic_weight_init(type='noraml'))
 
     def forward(self, input):
         return self.net(input)
@@ -67,7 +67,7 @@ class Generator(Module):
         )
 
         # init model weights
-        self.apply(basic_weight_init)
+        self.apply(basic_weight_init(type='noraml'))
 
     def forward(self, input):
         return self.net(input)
