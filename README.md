@@ -12,15 +12,16 @@ Requirements: python3.6, pytorch 1.0, torchvision, imagemagick
 #### improving training
 
 - [ ] Minibatch discrimination
-- [ ] One-sided label smoothing
+- [x] One-sided label smoothing
 - [ ] Experience replay
 - [ ] Conditional GAN
 
 ## Example
 
 #### training dcgan:
-1. download [celeba](http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html) dataset
-2. run training
+1. Download [celeb A](http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html) dataset and unpack.
+2. Set path for the dataset in dcgam.yaml
+3. run training
 
 ```
 python train.py --cfg ./cfgs/dcgan.yaml

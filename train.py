@@ -54,7 +54,9 @@ def train(cfg: dict, model_path=None, debug=False) -> list:
 
     # define labels
     batch_size = cfg['train']['batch_size']
-    label_real = torch.full((batch_size,), 1, device=device)
+    smooth_label = cfg['train']['smooth_alpha']
+    label_real_d = torch.full((batch_size,), 1 - smooth_label, device=device)
+    label_real_g = torch.full((batch_size,), 1, device=device)
     label_gen = torch.full((batch_size,), 0, device=device)
 
     # load dataset
@@ -81,7 +83,7 @@ def train(cfg: dict, model_path=None, debug=False) -> list:
             # train real image batch
             real_images = data[0].to(device)
             d_output = d_net(real_images).view(-1)
-            loss_d_real = criterion(d_output, label_real)
+            loss_d_real = criterion(d_output, label_real_d)
             loss_d_real.backward()
 
             # train gen image batch
@@ -101,7 +103,7 @@ def train(cfg: dict, model_path=None, debug=False) -> list:
 
             # train generator
             d_output = d_net(gen_image).view(-1)
-            loss_g = criterion(d_output, label_real)
+            loss_g = criterion(d_output, label_real_g)
             loss_g.backward()
             g_optimizer.step()
 

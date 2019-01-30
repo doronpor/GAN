@@ -16,3 +16,5 @@ train:
   workers: 2
   device: 'cuda:0'
   ngpu: 1 # number of gpus to use
+
+  smooth_alpha: 0.1 # one side true label smoothing. 0 to disable label smoothing
