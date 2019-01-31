@@ -1,18 +1,22 @@
-num_image_channels: 3
+type: DCGan
 
-generator:
-  num_features: 64
-  latent_vector: 100
+network:
+  num_image_channels: 3
 
-discriminator:
-  num_features: 64
+  discriminator:
+    num_features: 64
+
+  generator:
+    num_features: 64
+    latent_vector: 100
 
 train:
   dataset_path: './celeb' # relative path from datasets directory to root of dataset
   batch_size: 128
-  learning_rate: 0.0002
-  beta1: 0.5
-  epochs: 5
+  optimizer:
+    lr: 0.0002
+    betas: [0.5,0.999]
+  epochs: 10
   workers: 2
   device: 'cuda:0'
   ngpu: 1 # number of gpus to use

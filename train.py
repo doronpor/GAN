@@ -8,10 +8,9 @@ import torch
 import os.path as path
 import os
 
-from torch import optim
 import torchvision.utils as vutils
 
-from GAN.network.dcgan_net import Generator, Discriminator
+from GAN.trainer.trainer_factory import factory
 from GAN.datasets.folder_loader import get_folder_data_loader
 from GAN.utils.base_logger import set_base_logger
 from GAN.utils.configuration import load_config
@@ -31,33 +30,20 @@ def train(cfg: dict, model_path=None, debug=False) -> list:
     """
     device = torch.device(cfg['train']['device'] if torch.cuda.is_available() else "cpu")
 
-    # net initialization
-    d_net = Discriminator(cfg)
-    g_net = Generator(cfg)
+    # initialize trainer and move to device
+    trainer = factory(cfg)
+    trainer.to(device)
 
-    d_net.to(device)
-    g_net.to(device)
+    # net initialization
+    d_net = trainer.discriminator()
+    g_net = trainer.generator()
 
     # optimizer initialization
-    d_optimizer = optim.Adam(d_net.parameters(),
-                             lr=cfg['train']['learning_rate'],
-                             betas=(cfg['train']['beta1'], 0.999))
-    g_optimizer = optim.Adam(g_net.parameters(),
-                             lr=cfg['train']['learning_rate'],
-                             betas=(cfg['train']['beta1'], 0.999))
+    d_optimizer = trainer.optimizer()(d_net.parameters(), **cfg['train']['optimizer'])
+    g_optimizer = trainer.optimizer()(g_net.parameters(), **cfg['train']['optimizer'])
 
     # load snapshot
     # todo load snapshot from config
-
-    # define loss
-    criterion = torch.nn.BCELoss()
-
-    # define labels
-    batch_size = cfg['train']['batch_size']
-    smooth_label = cfg['train']['smooth_alpha']
-    label_real_d = torch.full((batch_size,), 1 - smooth_label, device=device)
-    label_real_g = torch.full((batch_size,), 1, device=device)
-    label_gen = torch.full((batch_size,), 0, device=device)
 
     # load dataset
     data_loader = get_folder_data_loader(cfg['train']['dataset_path'],
@@ -66,12 +52,13 @@ def train(cfg: dict, model_path=None, debug=False) -> list:
 
     if debug:
         # fix noise to create images for debug mode
-        z_noise = torch.randn(64, cfg['generator']['latent_vector'], 1, 1, device=device)
+        z_noise = torch.randn(64, cfg['network']['generator']['latent_vector'], 1, 1, device=device)
         gen_image_list = []
     else:
         gen_image_list = None
 
     # main train_loop
+    batch_size = cfg['train']['batch_size']
     logger.info('starting training loop')
     for epoch in range(cfg['train']['epochs']):
         for i, data in enumerate(data_loader):
@@ -83,13 +70,13 @@ def train(cfg: dict, model_path=None, debug=False) -> list:
             # train real image batch
             real_images = data[0].to(device)
             d_output = d_net(real_images).view(-1)
-            loss_d_real = criterion(d_output, label_real_d)
+            loss_d_real = trainer.dis_loss_real(d_output)
             loss_d_real.backward()
 
             # train gen image batch
             gen_image = g_net.generate_image(batch_size, device=device)
             d_output = d_net(gen_image.detach()).view(-1)
-            loss_d_gen = criterion(d_output, label_gen)
+            loss_d_gen = trainer.dis_loss_fake(d_output)
             loss_d_gen.backward()
 
             loss_d = loss_d_real + loss_d_gen
@@ -103,7 +90,7 @@ def train(cfg: dict, model_path=None, debug=False) -> list:
 
             # train generator
             d_output = d_net(gen_image).view(-1)
-            loss_g = criterion(d_output, label_real_g)
+            loss_g = trainer.gen_loss(d_output)
             loss_g.backward()
             g_optimizer.step()
 
