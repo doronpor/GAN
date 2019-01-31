@@ -6,6 +6,9 @@ import torch
 
 
 class DcGanTrainer(GanTrainerInterface):
+    """
+    trainer for the dcgan architecture
+    """
     def __init__(self, cfg: dict):
         # Initialization of decoder and encoder
         self._generator = Generator(cfg)

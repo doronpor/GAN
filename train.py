@@ -66,9 +66,10 @@ def train(cfg: dict, model_path=None, debug=False) -> list:
             ############################
             # (1) Update D network: maximize log(D(x)) + log(1 - D(G(z)))
             ###########################
-            d_optimizer.zero_grad()
 
             for _ in range(cfg['train']['dis_iter']):
+                d_optimizer.zero_grad()
+
                 # train real image batch
                 real_images = data[0].to(device)
                 d_output_real = d_net(real_images).view(-1)
@@ -82,17 +83,14 @@ def train(cfg: dict, model_path=None, debug=False) -> list:
                 loss_d_gen.backward()
 
                 # add regularization
-                reg_loss = trainer.reg_loss(real_images, gen_image.detach())
+                reg_loss = trainer.reg_loss(real_images.detach(), gen_image.detach())
                 if reg_loss is not None:
-                    reg_loss.backwards()
+                    reg_loss.backward()
 
                 # discriminator param update
                 d_optimizer.step()
 
-            if reg_loss is None:
-                loss_d = loss_d_real + loss_d_gen
-            else:
-                loss_d = loss_d_real + loss_d_gen + reg_loss
+            loss_d = loss_d_real + loss_d_gen
 
             ############################
             # (2) Update G network: maximize log(D(G(z)))
@@ -100,6 +98,7 @@ def train(cfg: dict, model_path=None, debug=False) -> list:
             g_optimizer.zero_grad()
 
             # train generator
+            gen_image = g_net.generate_image(batch_size, device=device)
             d_output = d_net(gen_image).view(-1)
             loss_g = trainer.gen_loss(d_output)
             loss_g.backward()
@@ -107,9 +106,14 @@ def train(cfg: dict, model_path=None, debug=False) -> list:
 
             # plot training loss
             if i % 50 == 0:
-                logger.info('epoch: [%d/%d] batch: [%d/%d],  Loss_D: %.4f,  Loss_G: %.4f'
-                            % (epoch, cfg['train']['epochs'], i, len(data_loader),
-                               loss_d.cpu().item(), loss_g.cpu().item()))
+                if reg_loss is None:
+                    logger.info('epoch: [%d/%d] batch: [%d/%d],  Loss_D: %.4f,  Loss_G: %.4f'
+                                % (epoch, cfg['train']['epochs'], i, len(data_loader),
+                                   loss_d.cpu().item(), loss_g.cpu().item()))
+                else:
+                    logger.info('epoch: [%d/%d] batch: [%d/%d],  Loss_D: %.4f,  Loss_G: %.4f,  Reg: %.4f'
+                                % (epoch, cfg['train']['epochs'], i, len(data_loader),
+                                   loss_d.cpu().item(), loss_g.cpu().item(), reg_loss.cpu().item()))
 
             # create generator images for debug
             if debug:
