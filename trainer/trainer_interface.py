@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Type
+from typing import Type, Union
 
 from torch.nn.modules import Module
 from torch.optim.optimizer import Optimizer
@@ -39,6 +39,15 @@ class GanTrainerInterface(ABC):
         :return:
         """
         raise NotImplementedError('loss method not implemented')
+
+    def reg_loss(self, image_real: torch.Tensor, image_fake: torch.Tensor) -> Union[None, torch.Tensor]:
+        """
+        compute regularization loss (needed for some GAN implementations)
+        :param image_real: real image
+        :param image_fake: fake image
+        :return: None if no Regularization, Tensor is regularization exists
+        """
+        return None
 
     def optimizer(self) -> Type[Optimizer]:
         raise NotImplementedError('optimizer method not implemented')

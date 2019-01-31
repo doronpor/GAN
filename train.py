@@ -55,6 +55,7 @@ def train(cfg: dict, model_path=None, debug=False) -> list:
         z_noise = torch.randn(64, cfg['network']['generator']['latent_vector'], 1, 1, device=device)
         gen_image_list = []
     else:
+        z_noise = None
         gen_image_list = None
 
     # main train_loop
@@ -67,21 +68,31 @@ def train(cfg: dict, model_path=None, debug=False) -> list:
             ###########################
             d_optimizer.zero_grad()
 
-            # train real image batch
-            real_images = data[0].to(device)
-            d_output = d_net(real_images).view(-1)
-            loss_d_real = trainer.dis_loss_real(d_output)
-            loss_d_real.backward()
+            for _ in range(cfg['train']['dis_iter']):
+                # train real image batch
+                real_images = data[0].to(device)
+                d_output_real = d_net(real_images).view(-1)
+                loss_d_real = trainer.dis_loss_real(d_output_real)
+                loss_d_real.backward()
 
-            # train gen image batch
-            gen_image = g_net.generate_image(batch_size, device=device)
-            d_output = d_net(gen_image.detach()).view(-1)
-            loss_d_gen = trainer.dis_loss_fake(d_output)
-            loss_d_gen.backward()
+                # train gen image batch
+                gen_image = g_net.generate_image(batch_size, device=device)
+                d_output_fake = d_net(gen_image.detach()).view(-1)
+                loss_d_gen = trainer.dis_loss_fake(d_output_fake)
+                loss_d_gen.backward()
 
-            loss_d = loss_d_real + loss_d_gen
-            # discriminator param update
-            d_optimizer.step()
+                # add regularization
+                reg_loss = trainer.reg_loss(real_images, gen_image.detach())
+                if reg_loss is not None:
+                    reg_loss.backwards()
+
+                # discriminator param update
+                d_optimizer.step()
+
+            if reg_loss is None:
+                loss_d = loss_d_real + loss_d_gen
+            else:
+                loss_d = loss_d_real + loss_d_gen + reg_loss
 
             ############################
             # (2) Update G network: maximize log(D(G(z)))
