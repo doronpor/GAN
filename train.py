@@ -67,42 +67,43 @@ def train(cfg: dict, model_path=None, debug=False) -> list:
             # (1) Update D network: maximize log(D(x)) + log(1 - D(G(z)))
             ###########################
 
-            for _ in range(cfg['train']['dis_iter']):
-                d_optimizer.zero_grad()
+            d_optimizer.zero_grad()
 
-                # train real image batch
-                real_images = data[0].to(device)
-                d_output_real = d_net(real_images).view(-1)
-                loss_d_real = trainer.dis_loss_real(d_output_real)
-                loss_d_real.backward()
+            # train real image batch
+            real_images = data[0].to(device)
+            d_output_real = d_net(real_images).view(-1)
+            loss_d_real = trainer.dis_loss_real(d_output_real)
+            loss_d_real.backward()
 
-                # train gen image batch
-                gen_image = g_net.generate_image(batch_size, device=device)
-                d_output_fake = d_net(gen_image.detach()).view(-1)
-                loss_d_gen = trainer.dis_loss_fake(d_output_fake)
-                loss_d_gen.backward()
+            # train gen image batch
+            gen_image = g_net.generate_image(batch_size, device=device)
+            d_output_fake = d_net(gen_image.detach()).view(-1)
+            loss_d_gen = trainer.dis_loss_fake(d_output_fake)
+            loss_d_gen.backward()
 
-                # add regularization
-                reg_loss = trainer.reg_loss(real_images.detach(), gen_image.detach())
-                if reg_loss is not None:
-                    reg_loss.backward()
+            # add regularization
+            reg_loss = trainer.reg_loss(real_images.detach(), gen_image.detach())
+            if reg_loss is not None:
+                reg_loss.backward()
 
-                # discriminator param update
-                d_optimizer.step()
+            # discriminator param update
+            d_optimizer.step()
 
             loss_d = loss_d_real + loss_d_gen
 
             ############################
             # (2) Update G network: maximize log(D(G(z)))
             ###########################
-            g_optimizer.zero_grad()
+            # update the G network every dis_iter steps
+            if i % cfg['train']['dis_iter'] == 0:
+                g_optimizer.zero_grad()
 
-            # train generator
-            gen_image = g_net.generate_image(batch_size, device=device)
-            d_output = d_net(gen_image).view(-1)
-            loss_g = trainer.gen_loss(d_output)
-            loss_g.backward()
-            g_optimizer.step()
+                # train generator
+                gen_image = g_net.generate_image(batch_size, device=device)
+                d_output = d_net(gen_image).view(-1)
+                loss_g = trainer.gen_loss(d_output)
+                loss_g.backward()
+                g_optimizer.step()
 
             # plot training loss
             if i % 50 == 0:
@@ -122,9 +123,9 @@ def train(cfg: dict, model_path=None, debug=False) -> list:
                         gen_fake = g_net(z_noise).detach().cpu()
                     gen_image_list.append(vutils.make_grid(gen_fake.detach().cpu(), padding=2, normalize=True))
 
-        # save models
-        if not path.isdir(path.dirname(model_path)):
-            os.mkdir(path.dirname(model_path))
+            # save models at the end of the epoch
+            if not path.isdir(path.dirname(model_path)):
+                os.mkdir(path.dirname(model_path))
 
         save_dict = {'generator': g_net.state_dict(),
                      'discriminator': d_net.state_dict()}
