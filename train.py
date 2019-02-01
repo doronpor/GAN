@@ -4,6 +4,8 @@ main training loop for generative adversarial networks
 
 import argparse
 import logging
+
+import tensorboardX
 import torch
 import os.path as path
 import os
@@ -58,11 +60,17 @@ def train(cfg: dict, model_path=None, debug=False) -> list:
         z_noise = None
         gen_image_list = None
 
+    # Initialize tensorboard
+    tb_path = path.abspath(path.join(path.dirname(__file__), cfg['train']['tensorboard_path']))
+    writer = tensorboardX.SummaryWriter(tb_path)
+
     # main train_loop
     batch_size = cfg['train']['batch_size']
     logger.info('starting training loop')
     for epoch in range(cfg['train']['epochs']):
         for i, data in enumerate(data_loader):
+            step = epoch * len(data_loader) + i
+
             ############################
             # (1) Update D network: maximize log(D(x)) + log(1 - D(G(z)))
             ###########################
@@ -95,7 +103,7 @@ def train(cfg: dict, model_path=None, debug=False) -> list:
             # (2) Update G network: maximize log(D(G(z)))
             ###########################
             # update the G network every dis_iter steps
-            if i % cfg['train']['dis_iter'] == 0:
+            if step % cfg['train']['dis_iter'] == 0:
                 g_optimizer.zero_grad()
 
                 # train generator
@@ -106,15 +114,30 @@ def train(cfg: dict, model_path=None, debug=False) -> list:
                 g_optimizer.step()
 
             # plot training loss
-            if i % 50 == 0:
+            if step % 50 == 0 and step != 0:
+                # plot log to screen
                 if reg_loss is None:
                     logger.info('epoch: [%d/%d] batch: [%d/%d],  Loss_D: %.4f,  Loss_G: %.4f'
                                 % (epoch, cfg['train']['epochs'], i, len(data_loader),
                                    loss_d.cpu().item(), loss_g.cpu().item()))
+
+                    # plot log to tensorboard
+                    writer.add_scalars('Loss', {
+                        'Loss_D': loss_d.cpu().item(),
+                        'Loss_G': loss_g.cpu().item()
+                    }, global_step=step)
+
                 else:
                     logger.info('epoch: [%d/%d] batch: [%d/%d],  Loss_D: %.4f,  Loss_G: %.4f,  Reg: %.4f'
                                 % (epoch, cfg['train']['epochs'], i, len(data_loader),
                                    loss_d.cpu().item(), loss_g.cpu().item(), reg_loss.cpu().item()))
+
+                    # plot log to tensorboard
+                    writer.add_scalars('Loss', {
+                        'Loss_D': loss_d.cpu().item(),
+                        'Loss_G': loss_g.cpu().item(),
+                        'Loss_Reg': reg_loss.cpu().item()
+                    }, global_step=step)
 
             # create generator images for debug
             if debug:

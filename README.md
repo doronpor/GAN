@@ -3,7 +3,14 @@
 
 PyTorch Generative adversarial networks
 
-Requirements: python3.6, pytorch 1.0, torchvision, imagemagick
+## Requirements
+
+* python3.6
+* pytorch 1.0
+* torchvision
+* tensorboard
+* [tensorboardX](https://github.com/lanpa/tensorboardX)
+* [imagemagick](http://www.imagemagick.org/script/download.php) (optional for creating gifs)
 
 #### Implemented GAN methods
 

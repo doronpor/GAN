@@ -12,6 +12,7 @@ network:
 
 train:
   dataset_path: './celeb' # relative path from datasets directory to root of dataset
+  tensorboard_path: './TensorBoard/dcgan/'
   batch_size: 128
   optimizer:
     lr: 0.0002
