@@ -24,4 +24,4 @@ train:
   ngpu: 1 # number of gpus to use
 
   reg_weight: 10 # one side true label smoothing. 0 to disable label smoothing
-  gp_type: 'NORMAL' # 'NORMAL' - regular WGAN_GP from article , 'DRAGAN' - https://arxiv.org/pdf/1705.07215.pdf
+  gp_type: 'DRAGAN' # 'NORMAL' - regular WGAN_GP from article , 'DRAGAN' - https://arxiv.org/pdf/1705.07215.pdf

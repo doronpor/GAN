@@ -21,7 +21,7 @@ def animate_gif(image_list: list, path: str = None, fps=1.5, writer='imagemagick
     fig = plt.figure(figsize=(8, 8))
     plt.axis("off")
     ims = [[plt.imshow(np.transpose(i, (1, 2, 0)), animated=True)] for i in image_list]
-    anim = animation.ArtistAnimation(fig, ims, interval=1000, repeat_delay=1000, blit=True)
+    anim = animation.ArtistAnimation(fig, ims, interval=1000, repeat_delay=3000, blit=True)
 
     if path is not None:
         # save gif animation

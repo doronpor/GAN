@@ -22,7 +22,7 @@ set_base_logger()
 logger = logging.getLogger('train')
 
 
-def train(cfg: dict, model_path=None, debug=False) -> list:
+def train(cfg: dict, model_path: str = None, debug=False) -> list:
     """
     main training file for GAN networks
     :param cfg: network configuration file
@@ -39,6 +39,10 @@ def train(cfg: dict, model_path=None, debug=False) -> list:
     # net initialization
     d_net = trainer.discriminator()
     g_net = trainer.generator()
+
+    # switch to train mode
+    d_net.train()
+    g_net.train()
 
     # optimizer initialization
     d_optimizer = trainer.optimizer()(d_net.parameters(), **cfg['train']['optimizer'])
@@ -72,7 +76,7 @@ def train(cfg: dict, model_path=None, debug=False) -> list:
             step = epoch * len(data_loader) + i
 
             ############################
-            # (1) Update D network: maximize log(D(x)) + log(1 - D(G(z)))
+            # (1) Update Discriminator network
             ###########################
 
             d_optimizer.zero_grad()
@@ -95,12 +99,12 @@ def train(cfg: dict, model_path=None, debug=False) -> list:
                 reg_loss.backward()
 
             # discriminator param update
-            d_optimizer.step()
+            d_optimizer.step(None)
 
             loss_d = loss_d_real + loss_d_gen
 
             ############################
-            # (2) Update G network: maximize log(D(G(z)))
+            # (2) Update Generator network
             ###########################
             # update the G network every dis_iter steps
             if step % cfg['train']['dis_iter'] == 0:
@@ -111,7 +115,7 @@ def train(cfg: dict, model_path=None, debug=False) -> list:
                 d_output = d_net(gen_image).view(-1)
                 loss_g = trainer.gen_loss(d_output)
                 loss_g.backward()
-                g_optimizer.step()
+                g_optimizer.step(None)
 
             # plot training loss
             if step % 50 == 0 and step != 0:
@@ -150,7 +154,8 @@ def train(cfg: dict, model_path=None, debug=False) -> list:
             if not path.isdir(path.dirname(model_path)):
                 os.mkdir(path.dirname(model_path))
 
-        save_dict = {'generator': g_net.state_dict(),
+        save_dict = {'epoch': epoch,
+                     'generator': g_net.state_dict(),
                      'discriminator': d_net.state_dict()}
 
         torch.save(save_dict, model_path)
@@ -170,11 +175,11 @@ if __name__ == '__main__':
     logger.info('using config path: %s' % path.abspath(args.config))
 
     # load config
-    cfg = load_config(args.config)
+    config = load_config(args.config)
 
     # run train
     model_path = path.abspath(path.join(path.dirname(__file__), args.model_path))
-    debug_images = train(cfg, model_path=model_path, debug=args.debug)
+    debug_images = train(config, model_path=model_path, debug=args.debug)
 
     # create and save gif
     if args.debug:

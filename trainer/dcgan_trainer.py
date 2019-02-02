@@ -7,7 +7,9 @@ import torch
 
 class DcGanTrainer(GanTrainerInterface):
     """
-    trainer for the dcgan architecture
+    trainer for the dcgan architecture.
+    (1) Update D network: maximize log(D(x)) + log(1 - D(G(z)))
+    (2) Update G network: maximize log(D(G(z)))
     """
     def __init__(self, cfg: dict):
         # Initialization of decoder and encoder

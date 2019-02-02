@@ -4,6 +4,7 @@ from GAN.trainer.wgan_gp_trainer import WGanGpTrainer
 
 
 def factory(cfg: dict) -> GanTrainerInterface:
+    # todo change cfg to string. do not use cfg directly
     if cfg['type'] == 'DCGan':
         return DcGanTrainer(cfg)
     elif cfg['type'] == 'Wgan_GP':

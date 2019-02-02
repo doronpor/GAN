@@ -19,11 +19,17 @@ PyTorch Generative adversarial networks
   basic dcgan network is based on pytorch [tutorial](https://pytorch.org/tutorials/beginner/dcgan_faces_tutorial.html)
   
 * **WGAN-GP** - "Improved Training of Wasserstein GANs" [article](https://arxiv.org/pdf/1704.00028.pdf)
+* **DRAGAN** - "On Convergence And Stability Of GANs" [article](https://arxiv.org/pdf/1705.07215.pdf)
+ 
+#### TODO Capabilities
+- [ ] Parallel training
+- [ ] resume training
+- [ ] Inception score
   
 #### Improving training
 
-- [ ] Minibatch discrimination
 - [x] One-sided label smoothing
+- [ ] Minibatch discrimination
 - [ ] Experience replay
 - [ ] Conditional GAN
 
@@ -36,6 +42,11 @@ PyTorch Generative adversarial networks
 
 ```
 python train.py --cfg ./cfgs/dcgan.yaml
+```
+
+#### inference dcgan:
+```
+python ./Examples/dcgn_demo.py
 ```
 
 #### celeb a output (10 epoch gif):

@@ -18,6 +18,7 @@ class WGanGpTrainer(GanTrainerInterface):
         # Initialization of decoder and encoder
         self._generator = Generator(cfg)
         self._discriminator = Discriminator(cfg)
+        self.gp_type = cfg['train']['gp_type']
 
         self.lambda_weight = cfg['train']['reg_weight']
 
@@ -43,10 +44,18 @@ class WGanGpTrainer(GanTrainerInterface):
         :param image_fake: generated fake image
         :return:
         """
-        # interpolate between images
         batch_size = image_real.shape[0]
         alpha = torch.rand(batch_size, 1, 1, 1, device=image_real.device)
-        image_interpolated = (alpha * image_real + (1 - alpha) * image_fake).detach()
+        if self.gp_type == 'NORMAL':
+            # interpolate between read and fake image
+            image_interpolated = (alpha * image_real + (1 - alpha) * image_fake).detach()
+        elif self.gp_type == 'DRAGAN':
+            # sample near perturbation of real image only
+            real_perturbed = 0.5 * image_real.std(dim=0, keepdim=True) * \
+                  torch.rand(batch_size, 1, 1, 1, device=image_real.device)
+            image_interpolated = (image_real + alpha * real_perturbed).detach()
+        else:
+            raise TypeError('Non supported type for gp_type')
 
         # set requires grad to differentiate with image respect
         image_interpolated.requires_grad_()
